@@ -111,6 +111,17 @@ export class ContainerInstance {
   }
 
   /**
+   * Retrieves all services that are instances of given instance class from the service container.
+   */
+  public getInstancesOf<T = unknown>(instanceClass: Constructable<T>): T[] {
+    this.throwIfDisposed();
+
+    return Array.from(this.metadataMap.entries())
+      .filter(([, metadata]) => metadata.value instanceof instanceClass)
+      .map(([, metadata]) => this.getServiceValue(metadata));
+  }
+
+  /**
    * Gets all instances registered in the container of the given service identifier.
    * Used when service defined with multiple: true flag.
    */

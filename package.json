@@ -1,14 +1,20 @@
 {
-  "name": "typedi",
+  "name": "@fullview/typedi",
   "version": "0.10.0",
   "description": "Dependency injection for TypeScript.",
+  "publishConfig": {
+    "access": "restricted"
+  },
   "author": "TypeStack contributors",
   "license": "MIT",
   "sideEffects": false,
-  "main": "./cjs/index.js",
-  "module": "./esm5/index.js",
-  "es2015": "./esm2015/index.js",
-  "typings": "./types/index.d.ts",
+  "main": "./build/cjs/index.js",
+  "module": "./build/esm5/index.js",
+  "es2015": "./build/esm2015/index.js",
+  "typings": "./build/types/index.d.ts",
+  "files": [
+    "build/**"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/pleerock/typedi.git"
@@ -22,7 +28,7 @@
     "dependency-injection"
   ],
   "scripts": {
-    "build": "npm run build:cjs",
+    "build": "yarn build:clean; yarn build:es2015; yarn build:esm5; yarn build:cjs; yarn build:umd; yarn build:types",
     "build:clean": "rimraf build",
     "build:es2015": "tsc --project tsconfig.prod.esm2015.json",
     "build:esm5": "tsc --project tsconfig.prod.esm5.json",
