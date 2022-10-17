@@ -1,4 +1,5 @@
 import { ContainerInstance } from './container-instance.class';
+import { Constructable } from './types/constructable.type';
 import { ContainerIdentifier } from './types/container-identifier.type';
 
 /**
@@ -75,6 +76,24 @@ export class ContainerRegistry {
     }
 
     return registeredContainer;
+  }
+
+  /**
+   * Retrieves all services that are instances of given instance class from the service container.
+   */
+  public static getInstancesOf<T = unknown>(instanceClass: Constructable<T>): T[] {
+    const allContainers = [ContainerRegistry.defaultContainer].concat(
+      Array.from(ContainerRegistry.containerMap.values())
+    );
+
+    return Array.from(
+      new Set(
+        allContainers.reduce(
+          (previousInstances, container) => previousInstances.concat(container.getInstancesOf(instanceClass)),
+          [] as T[]
+        )
+      )
+    );
   }
 
   /**

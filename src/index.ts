@@ -26,6 +26,7 @@ export { Constructable } from './types/constructable.type';
 export { ServiceIdentifier } from './types/service-identifier.type';
 
 export { ContainerInstance } from './container-instance.class';
+export { ContainerRegistry } from './container-registry.class';
 export { Token } from './token.class';
 
 /** We export the default container under the Container alias. */
