@@ -86,9 +86,13 @@ export class ContainerRegistry {
       Array.from(ContainerRegistry.containerMap.values())
     );
 
-    return allContainers.reduce(
-      (previousInstances, container) => previousInstances.concat(container.getInstancesOf(instanceClass)),
-      [] as T[]
+    return Array.from(
+      new Set(
+        allContainers.reduce(
+          (previousInstances, container) => previousInstances.concat(container.getInstancesOf(instanceClass)),
+          [] as T[]
+        )
+      )
     );
   }
 
