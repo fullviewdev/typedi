@@ -8,7 +8,7 @@ import { ServiceOptions } from './interfaces/service-options.interface';
 import { EMPTY_VALUE } from './empty.const';
 import { ContainerIdentifier } from './types/container-identifier.type';
 import { Handler } from './interfaces/handler.interface';
-import { ContainerRegistry } from './container-registry.class';
+import * as ContainerRegistry from './common';
 import { ContainerScope } from './types/container-scope.type';
 
 /**
@@ -107,7 +107,7 @@ export class ContainerInstance {
       return value;
     }
 
-    throw new ServiceNotFoundError(identifier);
+    throw ServiceNotFoundError(identifier);
   }
 
   /**
@@ -143,7 +143,7 @@ export class ContainerInstance {
       return localIdMap.tokens.map(generatedId => this.get<T>(generatedId));
     }
 
-    throw new ServiceNotFoundError(identifier);
+    throw ServiceNotFoundError(identifier);
   }
 
   /**
