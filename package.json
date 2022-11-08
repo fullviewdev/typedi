@@ -1,6 +1,6 @@
 {
   "name": "@fullview/typedi",
-  "version": "0.10.1",
+  "version": "0.10.2",
   "description": "Dependency injection for TypeScript.",
   "publishConfig": {
     "access": "restricted"
