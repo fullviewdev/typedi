@@ -8,9 +8,6 @@ if (!Reflect || !(Reflect as any).getMetadata) {
   );
 }
 
-/** This is an internal package, so we don't re-export it on purpose. */
-import { ContainerRegistry } from './container-registry.class';
-
 export * from './decorators/inject-many.decorator';
 export * from './decorators/inject.decorator';
 export * from './decorators/service.decorator';
@@ -25,10 +22,9 @@ export { ServiceOptions } from './interfaces/service-options.interface';
 export { Constructable } from './types/constructable.type';
 export { ServiceIdentifier } from './types/service-identifier.type';
 
-export { ContainerInstance } from './container-instance.class';
-export { ContainerRegistry } from './container-registry.class';
+export { ContainerInstance, ContainerRegistry } from './container.class';
 export { Token } from './token.class';
 
-/** We export the default container under the Container alias. */
+import { ContainerRegistry } from './container.class';
 export const Container = ContainerRegistry.defaultContainer;
 export default Container;

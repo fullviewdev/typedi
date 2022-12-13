@@ -1,9 +1,9 @@
-import { ContainerRegistry } from '../container-registry.class';
 import { Token } from '../token.class';
 import { CannotInjectValueError } from '../error/cannot-inject-value.error';
 import { resolveToTypeWrapper } from '../utils/resolve-to-type-wrapper.util';
 import { Constructable } from '../types/constructable.type';
 import { ServiceIdentifier } from '../types/service-identifier.type';
+import { ContainerRegistry } from '../container.class';
 
 /**
  * Injects a list of services into a class property or constructor parameter.

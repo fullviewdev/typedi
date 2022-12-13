@@ -1,4 +1,4 @@
-import { ContainerInstance } from '../container-instance.class';
+import { ContainerInstance } from '../container.class';
 import { Constructable } from '../types/constructable.type';
 import { ContainerIdentifier } from '../types/container-identifier.type';
 import { ContainerScope } from '../types/container-scope.type';
