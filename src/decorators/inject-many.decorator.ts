@@ -8,11 +8,11 @@ import { Container } from '../container.class';
 /**
  * Injects a list of services into a class property or constructor parameter.
  */
-export function InjectMany(): Function;
-export function InjectMany(type?: (type?: any) => Function): Function;
-export function InjectMany(serviceName?: string): Function;
-export function InjectMany(token: Token<any>): Function;
-export function InjectMany(
+export function injectMany(): Function;
+export function injectMany(type?: (type?: any) => Function): Function;
+export function injectMany(serviceName?: string): Function;
+export function injectMany(token: Token<any>): Function;
+export function injectMany(
   typeOrIdentifier?: ((type?: never) => Constructable<unknown>) | ServiceIdentifier<unknown>
 ): Function {
   return function (target: Object, propertyName: string | Symbol, index?: number): void {

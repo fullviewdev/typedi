@@ -8,11 +8,11 @@ import { Container } from '../container.class';
 /**
  * Injects a service into a class property or constructor parameter.
  */
-export function Inject(): Function;
-export function Inject(typeFn: (type?: never) => Constructable<unknown>): Function;
-export function Inject(serviceName?: string): Function;
-export function Inject(token: Token<unknown>): Function;
-export function Inject(
+export function inject(): Function;
+export function inject(typeFn: (type?: never) => Constructable<unknown>): Function;
+export function inject(serviceName?: string): Function;
+export function inject(token: Token<unknown>): Function;
+export function inject(
   typeOrIdentifier?: ((type?: never) => Constructable<unknown>) | ServiceIdentifier<unknown>
 ): ParameterDecorator | PropertyDecorator {
   return function (target: Object, propertyName: string | Symbol, index?: number): void {

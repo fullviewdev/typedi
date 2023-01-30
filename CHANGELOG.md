@@ -213,7 +213,7 @@ The old behavior can be restored with passing the `{ strategy: 'resetServices'}`
 - removed deprecated `@Require` decorator
 - added support for transient services
 - now service constructors cannot accept non-service arguments
-- added `@InjectMany` decorator to support injection of "many" values
+- added `@injectMany` decorator to support injection of "many" values
 - fixed the way how global services work
 
 ## 0.6.1

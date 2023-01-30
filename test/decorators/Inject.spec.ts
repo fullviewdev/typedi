@@ -3,7 +3,7 @@ import { Container } from '../../src/index';
 import { Service } from '../../src/decorators/service.decorator';
 import { Inject } from '../../src/decorators/inject.decorator';
 import { Token } from '../../src/token.class';
-import { InjectMany } from '../../src/decorators/inject-many.decorator';
+import { injectMany } from '../../src/decorators/inject-many.decorator';
 
 describe('Inject Decorator', function () {
   beforeEach(() => Container.reset({ strategy: 'resetValue' }));
@@ -82,7 +82,7 @@ describe('Inject Decorator', function () {
     }
     @Service()
     class TestServiceWithParameters {
-      constructor(@InjectMany('cars') public cars: Car[]) {}
+      constructor(@injectMany('cars') public cars: Car[]) {}
     }
 
     expect(Container.get(TestServiceWithParameters).cars).toHaveLength(3);
