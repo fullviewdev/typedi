@@ -14,7 +14,116 @@ import { ContainerScope } from './types/container-scope.type';
  * TypeDI can have multiple containers.
  * One container is ContainerInstance.
  */
-export class ContainerInstance {
+export class Container {
+  /**
+   * The list of all known container. Created containers are automatically added
+   * to this list. Two container cannot be registered with the same ID.
+   *
+   * This map doesn't contains the default container.
+   */
+  private static readonly containerMap: Map<ContainerIdentifier, Container> = new Map();
+
+  /**
+   * The default global container. By default services are registered into this
+   * container when registered via `Container.set()` or `@Service` decorator.
+   */
+  public static readonly defaultContainer: Container = new Container('default');
+
+  /**
+   * Registers the given container instance or throws an error.
+   *
+   * _Note: This function is auto-called when a Container instance is created,
+   * it doesn't need to be called manually!_
+   *
+   * @param container the container to add to the registry
+   */
+  public static registerContainer(container: Container): void {
+    if (container instanceof Container === false) {
+      // TODO: Create custom error for this.
+      throw new Error('Only ContainerInstance instances can be registered.');
+    }
+
+    /** If we already set the default container (in index) then no-one else can register a default. */
+    if (!!Container.defaultContainer && container.id === 'default') {
+      // TODO: Create custom error for this.
+      throw new Error('You cannot register a container with the "default" ID.');
+    }
+
+    if (Container.containerMap.has(container.id)) {
+      // TODO: Create custom error for this.
+      throw new Error('Cannot register container with same ID.');
+    }
+
+    Container.containerMap.set(container.id, container);
+  }
+
+  /**
+   * Returns true if a container exists with the given ID or false otherwise.
+   *
+   * @param container the ID of the container
+   */
+  public static hasContainer(id: ContainerIdentifier): boolean {
+    return Container.containerMap.has(id);
+  }
+
+  /**
+   * Returns the container for requested ID or throws an error if no container
+   * is registered with the given ID.
+   *
+   * @param container the ID of the container
+   */
+  public static getContainer(id: ContainerIdentifier): Container {
+    const registeredContainer = this.containerMap.get(id);
+
+    if (registeredContainer === undefined) {
+      // TODO: Create custom error for this.
+      throw new Error('No container is registered with the given ID.');
+    }
+
+    return registeredContainer;
+  }
+
+  /**
+   * Retrieves all services that are instances of given instance class from the service container.
+   */
+  public static getInstancesOf<T = unknown>(instanceClass: Constructable<T>): T[] {
+    const allContainers = [Container.defaultContainer].concat(Array.from(Container.containerMap.values()));
+
+    return Array.from(
+      new Set(
+        allContainers.reduce(
+          (previousInstances, container) => previousInstances.concat(container.getInstancesOf(instanceClass)),
+          [] as T[]
+        )
+      )
+    );
+  }
+
+  /**
+   * Removes the given container from the registry and disposes all services
+   * registered only in this container.
+   *
+   * This function throws an error if no
+   *   - container exists with the given ID
+   *   - any of the registered services threw an error during it's disposal
+   *
+   * @param container the container to remove from the registry
+   */
+  public static async removeContainer(container: Container): Promise<void> {
+    const registeredContainer = Container.containerMap.get(container.id);
+
+    if (registeredContainer === undefined) {
+      // TODO: Create custom error for this.
+      throw new Error('No container is registered with the given ID.');
+    }
+
+    /** We remove the container first. */
+    Container.containerMap.delete(container.id);
+
+    /** We dispose all registered classes in the container. */
+    await registeredContainer.dispose();
+  }
+
   /** Container instance id. */
   public readonly id!: ContainerIdentifier;
 
@@ -45,13 +154,13 @@ export class ContainerInstance {
   constructor(id: ContainerIdentifier) {
     this.id = id;
 
-    ContainerRegistry.registerContainer(this);
+    Container.registerContainer(this);
 
     /**
      * TODO: This is to replicate the old functionality. This should be copied only
      * TODO: if the container decides to inherit registered classes from a parent container.
      */
-    this.handlers = ContainerRegistry.defaultContainer?.handlers || [];
+    this.handlers = Container.defaultContainer?.handlers || [];
   }
 
   /**
@@ -71,7 +180,7 @@ export class ContainerInstance {
   public get<T = unknown>(identifier: ServiceIdentifier<T>): T {
     this.throwIfDisposed();
 
-    const global = ContainerRegistry.defaultContainer.metadataMap.get(identifier);
+    const global = Container.defaultContainer.metadataMap.get(identifier);
     const local = this.metadataMap.get(identifier);
     /** If the service is registered as global we load it from there, otherwise we use the local one. */
     const metadata = global?.scope === 'singleton' ? global : local;
@@ -90,7 +199,7 @@ export class ContainerInstance {
      * If it's the first time requested in the child container we load it from parent and set it.
      * TODO: This will be removed with the container inheritance rework.
      */
-    if (global && this !== ContainerRegistry.defaultContainer) {
+    if (global && this !== Container.defaultContainer) {
       const clonedService = { ...global };
       clonedService.value = EMPTY_VALUE;
 
@@ -127,7 +236,7 @@ export class ContainerInstance {
   public getMany<T = unknown>(identifier: ServiceIdentifier<T>): T[] {
     this.throwIfDisposed();
 
-    const globalIdMap = ContainerRegistry.defaultContainer.multiServiceIds.get(identifier);
+    const globalIdMap = Container.defaultContainer.multiServiceIds.get(identifier);
     const localIdMap = this.multiServiceIds.get(identifier);
 
     /**
@@ -135,7 +244,7 @@ export class ContainerInstance {
      * container, otherwise we use the local one.
      */
     if (globalIdMap?.scope === 'singleton') {
-      return globalIdMap.tokens.map(generatedId => ContainerRegistry.defaultContainer.get<T>(generatedId));
+      return globalIdMap.tokens.map(generatedId => Container.defaultContainer.get<T>(generatedId));
     }
 
     if (localIdMap) {
@@ -155,8 +264,8 @@ export class ContainerInstance {
      * If the service is marked as singleton, we set it in the default container.
      * (And avoid an infinite loop via checking if we are in the default container or not.)
      */
-    if (serviceOptions.scope === 'singleton' && ContainerRegistry.defaultContainer !== this) {
-      ContainerRegistry.defaultContainer.set(serviceOptions);
+    if (serviceOptions.scope === 'singleton' && Container.defaultContainer !== this) {
+      Container.defaultContainer.set(serviceOptions);
 
       return this;
     }
@@ -245,23 +354,23 @@ export class ContainerInstance {
   /**
    * Gets a separate container instance for the given instance id.
    */
-  public of(containerId: ContainerIdentifier = 'default'): ContainerInstance {
+  public of(containerId: ContainerIdentifier = 'default'): Container {
     this.throwIfDisposed();
 
     if (containerId === 'default') {
-      return ContainerRegistry.defaultContainer;
+      return Container.defaultContainer;
     }
 
-    let container: ContainerInstance;
+    let container: Container;
 
-    if (ContainerRegistry.hasContainer(containerId)) {
-      container = ContainerRegistry.getContainer(containerId);
+    if (Container.hasContainer(containerId)) {
+      container = Container.getContainer(containerId);
     } else {
       /**
        * This is deprecated functionality, for now we create the container if it's doesn't exists.
        * This will be reworked when container inheritance is reworked.
        */
-      container = new ContainerInstance(containerId);
+      container = new Container(containerId);
     }
 
     return container;
@@ -270,7 +379,7 @@ export class ContainerInstance {
   /**
    * Registers a new handler.
    */
-  public registerHandler(handler: Handler): ContainerInstance {
+  public registerHandler(handler: Handler): Container {
     this.handlers.push(handler);
     return this;
   }
@@ -279,7 +388,7 @@ export class ContainerInstance {
    * Helper method that imports given services.
    */
   /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
-  public import(services: Function[]): ContainerInstance {
+  public import(services: Function[]): Container {
     this.throwIfDisposed();
 
     return this;
@@ -499,125 +608,5 @@ export class ContainerInstance {
 
       serviceMetadata.value = EMPTY_VALUE;
     }
-  }
-}
-
-/**
- * The container registry is responsible for holding the default and every
- * created container instance for later access.
- *
- * _Note: This class is for internal use and it's API may break in minor or
- * patch releases without warning._
- */
-export class ContainerRegistry {
-  /**
-   * The list of all known container. Created containers are automatically added
-   * to this list. Two container cannot be registered with the same ID.
-   *
-   * This map doesn't contains the default container.
-   */
-  private static readonly containerMap: Map<ContainerIdentifier, ContainerInstance> = new Map();
-
-  /**
-   * The default global container. By default services are registered into this
-   * container when registered via `Container.set()` or `@Service` decorator.
-   */
-  public static readonly defaultContainer: ContainerInstance = new ContainerInstance('default');
-
-  /**
-   * Registers the given container instance or throws an error.
-   *
-   * _Note: This function is auto-called when a Container instance is created,
-   * it doesn't need to be called manually!_
-   *
-   * @param container the container to add to the registry
-   */
-  public static registerContainer(container: ContainerInstance): void {
-    if (container instanceof ContainerInstance === false) {
-      // TODO: Create custom error for this.
-      throw new Error('Only ContainerInstance instances can be registered.');
-    }
-
-    /** If we already set the default container (in index) then no-one else can register a default. */
-    if (!!ContainerRegistry.defaultContainer && container.id === 'default') {
-      // TODO: Create custom error for this.
-      throw new Error('You cannot register a container with the "default" ID.');
-    }
-
-    if (ContainerRegistry.containerMap.has(container.id)) {
-      // TODO: Create custom error for this.
-      throw new Error('Cannot register container with same ID.');
-    }
-
-    ContainerRegistry.containerMap.set(container.id, container);
-  }
-
-  /**
-   * Returns true if a container exists with the given ID or false otherwise.
-   *
-   * @param container the ID of the container
-   */
-  public static hasContainer(id: ContainerIdentifier): boolean {
-    return ContainerRegistry.containerMap.has(id);
-  }
-
-  /**
-   * Returns the container for requested ID or throws an error if no container
-   * is registered with the given ID.
-   *
-   * @param container the ID of the container
-   */
-  public static getContainer(id: ContainerIdentifier): ContainerInstance {
-    const registeredContainer = this.containerMap.get(id);
-
-    if (registeredContainer === undefined) {
-      // TODO: Create custom error for this.
-      throw new Error('No container is registered with the given ID.');
-    }
-
-    return registeredContainer;
-  }
-
-  /**
-   * Retrieves all services that are instances of given instance class from the service container.
-   */
-  public static getInstancesOf<T = unknown>(instanceClass: Constructable<T>): T[] {
-    const allContainers = [ContainerRegistry.defaultContainer].concat(
-      Array.from(ContainerRegistry.containerMap.values())
-    );
-
-    return Array.from(
-      new Set(
-        allContainers.reduce(
-          (previousInstances, container) => previousInstances.concat(container.getInstancesOf(instanceClass)),
-          [] as T[]
-        )
-      )
-    );
-  }
-
-  /**
-   * Removes the given container from the registry and disposes all services
-   * registered only in this container.
-   *
-   * This function throws an error if no
-   *   - container exists with the given ID
-   *   - any of the registered services threw an error during it's disposal
-   *
-   * @param container the container to remove from the registry
-   */
-  public static async removeContainer(container: ContainerInstance): Promise<void> {
-    const registeredContainer = ContainerRegistry.containerMap.get(container.id);
-
-    if (registeredContainer === undefined) {
-      // TODO: Create custom error for this.
-      throw new Error('No container is registered with the given ID.');
-    }
-
-    /** We remove the container first. */
-    ContainerRegistry.containerMap.delete(container.id);
-
-    /** We dispose all registered classes in the container. */
-    await registeredContainer.dispose();
   }
 }

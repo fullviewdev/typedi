@@ -22,9 +22,5 @@ export { ServiceOptions } from './interfaces/service-options.interface';
 export { Constructable } from './types/constructable.type';
 export { ServiceIdentifier } from './types/service-identifier.type';
 
-export { ContainerInstance, ContainerRegistry } from './container.class';
+export { Container } from './container.class';
 export { Token } from './token.class';
-
-import { ContainerRegistry } from './container.class';
-export const Container = ContainerRegistry.defaultContainer;
-export default Container;

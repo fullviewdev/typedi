@@ -1,4 +1,4 @@
-import { ContainerInstance } from '../container.class';
+import { Container } from '../container.class';
 import { Constructable } from '../types/constructable.type';
 
 /**
@@ -27,5 +27,5 @@ export interface Handler<T = unknown> {
    * Factory function that produces value that will be set to class property or constructor parameter.
    * Accepts container instance which requested the value.
    */
-  value: (container: ContainerInstance) => any;
+  value: (container: Container) => any;
 }

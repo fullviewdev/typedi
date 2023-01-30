@@ -3,7 +3,7 @@ import { CannotInjectValueError } from '../error/cannot-inject-value.error';
 import { ServiceIdentifier } from '../types/service-identifier.type';
 import { Constructable } from '../types/constructable.type';
 import { resolveToTypeWrapper } from '../utils/resolve-to-type-wrapper.util';
-import { ContainerRegistry } from '../container.class';
+import { Container } from '../container.class';
 
 /**
  * Injects a service into a class property or constructor parameter.
@@ -23,7 +23,7 @@ export function Inject(
       throw new CannotInjectValueError(target as Constructable<unknown>, propertyName as string);
     }
 
-    ContainerRegistry.defaultContainer.registerHandler({
+    Container.defaultContainer.registerHandler({
       object: target as Constructable<unknown>,
       propertyName: propertyName as string,
       index: index,
